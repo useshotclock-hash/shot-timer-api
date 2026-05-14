@@ -1,0 +1,28 @@
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+import tensorflow as tf
+import librosa
+import numpy as np
+import io
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+model = tf.keras.models.load_model('shot_timer_model.h5')
+labels = ["Gunshot", "Reload", "Slide Battery"]
+@app.post("/detect")
+async def detect_sound(file: UploadFile = File(...)):
+    content = await file.read()
+    audio, sr = librosa.load(io.BytesIO(content), sr=22050)
+    mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=40)
+    features = np.mean(mfccs.T, axis=0).reshape(1, -1)
+    prediction = model.predict(features)
+    result_index = np.argmax(prediction)
+    confidence = float(np.max(prediction))
+    return {
+        "event": labels[result_index],
+        "confidence": f"{confidence * 100:.2f}%"
+    }
