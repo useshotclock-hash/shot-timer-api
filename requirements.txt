@@ -2,5 +2,5 @@ fastapi==0.104.1
 uvicorn==0.24.0.post1
 python-multipart==0.0.6
 librosa==0.10.1
-tensorflow-cpu==2.15.0
+tflite-runtime==2.14.0
 numpy==1.26.2
